@@ -1,80 +1,358 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
+
 {% block content %}
-<div class="d-flex flex-column flex-md-row gap-2 align-items-start align-items-md-center justify-content-between mb-3">
-  <form method="post" class="d-flex flex-column flex-sm-row gap-2 align-items-sm-end flex-wrap">
-    {{ form.hidden_tag() }}
-    <div>
-      {{ form.period.label(class='form-label') }}
-      {{ form.period(class='form-select') }}
+<div class="container-fluid py-2">
+  <!-- Date Navigation -->
+  <div class="d-flex justify-content-between align-items-center mb-2">
+    <a href="{{ url_for('dashboard.dashboard_view', start_date=prev_start, end_date=prev_end) }}"
+      class="btn btn-outline-secondary btn-sm">&lt;</a>
+    <div class="d-flex align-items-center gap-3">
+      <h5 class="mb-0 fw-bold">{{ formatted_date }}</h5>
+      <a href="{{ url_for('dashboard.export_excel', start_date=start, end_date=end) }}"
+        class="btn btn-success btn-sm">Excel Export</a>
     </div>
-    <div>
-      {{ form.start_date.label(class='form-label') }}
-      {{ form.start_date(class='form-control') }}
-    </div>
-    <div>
-      {{ form.end_date.label(class='form-label') }}
-      {{ form.end_date(class='form-control') }}
-    </div>
-    <div class="d-grid">
-      {{ form.submit(class='btn btn-primary') }}
-    </div>
-  </form>
-  <div class="text-muted small">{{ start }} ~ {{ end }} 기준</div>
+    <a href="{{ url_for('dashboard.dashboard_view', start_date=next_start, end_date=next_end) }}"
+      class="btn btn-outline-secondary btn-sm">&gt;</a>
+  </div>
+
+  <!-- Dashboard Table -->
+  <div class="table-responsive">
+    <table class="table table-bordered text-center align-middle" style="font-size: 0.85rem;">
+      <thead class="table-light">
+        <tr>
+          <th rowspan="2" style="width: 80px;">Doctor</th>
+          <th rowspan="2" style="width: 40px;">Div</th>
+          {% for proc in procedures %}
+          <th style="min-width: 140px;">{{ proc }}</th>
+          {% endfor %}
+        </tr>
+      </thead>
+
+      <tbody>
+        {% for doctor in doctors %}
+        {% set doc_name = doctor.doctor_name %}
+        {% set doc_allow_list = allow_config.get(doc_name) %}
+        {% set is_doc_restricted = (doc_allow_list is not none) %}
+
+        <!-- Checkup Row (검) -->
+        <tr>
+          <th rowspan="2"
+            class="align-middle fw-bold {{ 'bg-secondary bg-opacity-25' if is_doc_restricted else 'bg-light' }}">{{
+            doc_name }}</th>
+          <td class="align-middle small fw-bold {{ 'bg-secondary bg-opacity-10' if is_doc_restricted }}">검<br>({{
+            doc_stats[doc_name]['chk_total'] }})</td>
+
+          {% for proc in procedures %}
+          {% set data = matrix[doc_name][proc] %}
+
+          {% set is_readonly_cell = is_doc_restricted and (proc not in doc_allow_list) %}
+          {% set bg_class = 'bg-secondary bg-opacity-10' if is_readonly_cell else '' %}
+
+          <td class="p-0 align-middle {{ bg_class }}">
+            <div class="d-flex flex-column gap-0" style="min-height: 80px;">
+              <!-- Row 1: PUB_S | CHK_S -->
+              <div class="d-flex border-bottom flex-fill">
+                <div class="flex-fill border-end p-1 d-flex flex-column justify-content-center align-items-center">
+                  <div class="text-muted xx-small mb-1">공수</div>
+                  {% if is_readonly_cell %}
+                  <span class="fw-bold">{{ data['PUB_S'] or 0 }}</span>
+                  {% else %}
+                  <div class="input-group input-group-sm flex-nowrap" style="width: 90px;">
+                    <button class="btn btn-outline-primary p-0 px-2"
+                      onclick="updateInline('{{doc_name}}','{{proc}}','PUB_S', 'dec')">-</button>
+                    <input type="number" class="form-control text-center p-0 fw-bold border-0 bg-transparent"
+                      value="{{ data['PUB_S'] or 0 }}" id="in-{{doc_name}}-{{proc}}-PUB_S"
+                      onchange="manualInline('{{doc_name}}','{{proc}}','PUB_S')" />
+                    <button class="btn btn-outline-danger p-0 px-2"
+                      onclick="updateInline('{{doc_name}}','{{proc}}','PUB_S', 'inc')">+</button>
+                  </div>
+                  {% endif %}
+                </div>
+                <div class="flex-fill p-1 d-flex flex-column justify-content-center align-items-center">
+                  <div class="text-muted xx-small mb-1">검수</div>
+                  {% if is_readonly_cell %}
+                  <span class="fw-bold">{{ data['CHK_S'] or 0 }}</span>
+                  {% else %}
+                  <div class="input-group input-group-sm flex-nowrap" style="width: 90px;">
+                    <button class="btn btn-outline-primary p-0 px-2"
+                      onclick="updateInline('{{doc_name}}','{{proc}}','CHK_S', 'dec')">-</button>
+                    <input type="number" class="form-control text-center p-0 fw-bold border-0 bg-transparent"
+                      value="{{ data['CHK_S'] or 0 }}" id="in-{{doc_name}}-{{proc}}-CHK_S"
+                      onchange="manualInline('{{doc_name}}','{{proc}}','CHK_S')" />
+                    <button class="btn btn-outline-danger p-0 px-2"
+                      onclick="updateInline('{{doc_name}}','{{proc}}','CHK_S', 'inc')">+</button>
+                  </div>
+                  {% endif %}
+                </div>
+              </div>
+              <!-- Row 2: PUB_G | CHK_G -->
+              <div class="d-flex flex-fill">
+                <div class="flex-fill border-end p-1 d-flex flex-column justify-content-center align-items-center">
+                  <div class="text-muted xx-small mb-1">공일</div>
+                  {% if is_readonly_cell %}
+                  <span class="fw-bold">{{ data['PUB_G'] or 0 }}</span>
+                  {% else %}
+                  <div class="input-group input-group-sm flex-nowrap" style="width: 90px;">
+                    <button class="btn btn-outline-primary p-0 px-2"
+                      onclick="updateInline('{{doc_name}}','{{proc}}','PUB_G', 'dec')">-</button>
+                    <input type="number" class="form-control text-center p-0 fw-bold border-0 bg-transparent"
+                      value="{{ data['PUB_G'] or 0 }}" id="in-{{doc_name}}-{{proc}}-PUB_G"
+                      onchange="manualInline('{{doc_name}}','{{proc}}','PUB_G')" />
+                    <button class="btn btn-outline-danger p-0 px-2"
+                      onclick="updateInline('{{doc_name}}','{{proc}}','PUB_G', 'inc')">+</button>
+                  </div>
+                  {% endif %}
+                </div>
+                <div class="flex-fill p-1 d-flex flex-column justify-content-center align-items-center">
+                  <div class="text-muted xx-small mb-1">검일</div>
+                  {% if is_readonly_cell %}
+                  <span class="fw-bold">{{ data['CHK_G'] or 0 }}</span>
+                  {% else %}
+                  <div class="input-group input-group-sm flex-nowrap" style="width: 90px;">
+                    <button class="btn btn-outline-primary p-0 px-2"
+                      onclick="updateInline('{{doc_name}}','{{proc}}','CHK_G', 'dec')">-</button>
+                    <input type="number" class="form-control text-center p-0 fw-bold border-0 bg-transparent"
+                      value="{{ data['CHK_G'] or 0 }}" id="in-{{doc_name}}-{{proc}}-CHK_G"
+                      onchange="manualInline('{{doc_name}}','{{proc}}','CHK_G')" />
+                    <button class="btn btn-outline-danger p-0 px-2"
+                      onclick="updateInline('{{doc_name}}','{{proc}}','CHK_G', 'inc')">+</button>
+                  </div>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          </td>
+          {% endfor %}
+        </tr>
+
+        <!-- Other Row (외) -->
+        <tr>
+          <td class="align-middle small fw-bold {{ 'bg-secondary bg-opacity-10' if is_doc_restricted }}">외<br>({{
+            doc_stats[doc_name]['out_total'] }})</td>
+          {% for proc in procedures %}
+          {% set data = matrix[doc_name][proc] %}
+
+          {% set is_readonly_cell = is_doc_restricted and (proc not in doc_allow_list) %}
+          {% set bg_class = 'bg-secondary bg-opacity-10' if is_readonly_cell else '' %}
+
+          <td class="p-0 align-middle {{ bg_class }}">
+            <div class="d-flex flex-column gap-0" style="min-height: 80px;">
+              <!-- Row 1: OUT_S | INP_S -->
+              <div class="d-flex border-bottom flex-fill">
+                <div class="flex-fill border-end p-1 d-flex flex-column justify-content-center align-items-center">
+                  <div class="text-muted xx-small mb-1">외수</div>
+                  {% if is_readonly_cell %}
+                  <span class="fw-bold">{{ data['OUT_S'] or 0 }}</span>
+                  {% else %}
+                  <div class="input-group input-group-sm flex-nowrap" style="width: 90px;">
+                    <button class="btn btn-outline-primary p-0 px-2"
+                      onclick="updateInline('{{doc_name}}','{{proc}}','OUT_S', 'dec')">-</button>
+                    <input type="number" class="form-control text-center p-0 fw-bold border-0 bg-transparent"
+                      value="{{ data['OUT_S'] or 0 }}" id="in-{{doc_name}}-{{proc}}-OUT_S"
+                      onchange="manualInline('{{doc_name}}','{{proc}}','OUT_S')" />
+                    <button class="btn btn-outline-danger p-0 px-2"
+                      onclick="updateInline('{{doc_name}}','{{proc}}','OUT_S', 'inc')">+</button>
+                  </div>
+                  {% endif %}
+                </div>
+                <div class="flex-fill p-1 d-flex flex-column justify-content-center align-items-center">
+                  <div class="text-muted xx-small mb-1">병수</div>
+                  {% if is_readonly_cell %}
+                  <span class="fw-bold">{{ data['INP_S'] or 0 }}</span>
+                  {% else %}
+                  <div class="input-group input-group-sm flex-nowrap" style="width: 90px;">
+                    <button class="btn btn-outline-primary p-0 px-2"
+                      onclick="updateInline('{{doc_name}}','{{proc}}','INP_S', 'dec')">-</button>
+                    <input type="number" class="form-control text-center p-0 fw-bold border-0 bg-transparent"
+                      value="{{ data['INP_S'] or 0 }}" id="in-{{doc_name}}-{{proc}}-INP_S"
+                      onchange="manualInline('{{doc_name}}','{{proc}}','INP_S')" />
+                    <button class="btn btn-outline-danger p-0 px-2"
+                      onclick="updateInline('{{doc_name}}','{{proc}}','INP_S', 'inc')">+</button>
+                  </div>
+                  {% endif %}
+                </div>
+              </div>
+              <!-- Row 2: OUT_G | INP_G -->
+              <div class="d-flex flex-fill">
+                <div class="flex-fill border-end p-1 d-flex flex-column justify-content-center align-items-center">
+                  <div class="text-muted xx-small mb-1">외일</div>
+                  {% if is_readonly_cell %}
+                  <span class="fw-bold">{{ data['OUT_G'] or 0 }}</span>
+                  {% else %}
+                  <div class="input-group input-group-sm flex-nowrap" style="width: 90px;">
+                    <button class="btn btn-outline-primary p-0 px-2"
+                      onclick="updateInline('{{doc_name}}','{{proc}}','OUT_G', 'dec')">-</button>
+                    <input type="number" class="form-control text-center p-0 fw-bold border-0 bg-transparent"
+                      value="{{ data['OUT_G'] or 0 }}" id="in-{{doc_name}}-{{proc}}-OUT_G"
+                      onchange="manualInline('{{doc_name}}','{{proc}}','OUT_G')" />
+                    <button class="btn btn-outline-danger p-0 px-2"
+                      onclick="updateInline('{{doc_name}}','{{proc}}','OUT_G', 'inc')">+</button>
+                  </div>
+                  {% endif %}
+                </div>
+                <div class="flex-fill p-1 d-flex flex-column justify-content-center align-items-center">
+                  <div class="text-muted xx-small mb-1">병일</div>
+                  {% if is_readonly_cell %}
+                  <span class="fw-bold">{{ data['INP_G'] or 0 }}</span>
+                  {% else %}
+                  <div class="input-group input-group-sm flex-nowrap" style="width: 90px;">
+                    <button class="btn btn-outline-primary p-0 px-2"
+                      onclick="updateInline('{{doc_name}}','{{proc}}','INP_G', 'dec')">-</button>
+                    <input type="number" class="form-control text-center p-0 fw-bold border-0 bg-transparent"
+                      value="{{ data['INP_G'] or 0 }}" id="in-{{doc_name}}-{{proc}}-INP_G"
+                      onchange="manualInline('{{doc_name}}','{{proc}}','INP_G')" />
+                    <button class="btn btn-outline-danger p-0 px-2"
+                      onclick="updateInline('{{doc_name}}','{{proc}}','INP_G', 'inc')">+</button>
+                  </div>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          </td>
+          {% endfor %}
+        </tr>
+        {% endfor %}
+      </tbody>
+
+      <tfoot>
+        <!-- 1. General (일반) -->
+        <tr>
+          <th colspan="2" class="bg-light">일반 합계</th>
+          {% for proc in procedures %}
+          <td class="bg-light">{{ summary[proc + '_general'] }}</td>
+          {% endfor %}
+        </tr>
+
+        <!-- 2. Sedation (수면) -->
+        <tr>
+          <th colspan="2" class="bg-light">수면 합계</th>
+          {% for proc in procedures %}
+          <td class="bg-light">{{ summary[proc + '_sedation'] }}</td>
+          {% endfor %}
+        </tr>
+
+        <!-- 3. Total (합계) - Yellow -->
+        <tr class="fw-bold" style="border-top: 2px solid #000;">
+          <th colspan="2" class="bg-warning">전체 총계</th>
+          {% for proc in procedures %}
+          <th class="bg-warning">{{ summary[proc] }}</th>
+          {% endfor %}
+        </tr>
+
+        <!-- 4. Top-level Summary Block -->
+        <!-- Row A: General Total -->
+        <tr>
+          <th colspan="2" class="bg-light text-end pe-2">일반 총합</th>
+          <td class="fw-bold text-start ps-2">{{ summary['general_total'] }}</td>
+          <td colspan="{{ procedures|length - 3 }}"></td>
+          <td class="bg-light text-end small">M1 외수</td>
+          <td class="fw-bold">{{ summary['M1_OUT_S'] }}</td>
+        </tr>
+
+        <!-- Row B: Sedation Total -->
+        <tr>
+          <th colspan="2" class="bg-light text-end pe-2">수면 총합</th>
+          <td class="fw-bold text-start ps-2">{{ summary['sedation_total'] }}</td>
+          <td colspan="{{ procedures|length - 3 }}"></td>
+          <td class="bg-light text-end small">M2 외수</td>
+          <td class="fw-bold">{{ summary['M2_OUT_S'] }}</td>
+        </tr>
+
+        <!-- Row C: Overall Total (Yellow) -->
+        <tr>
+          <th colspan="2" class="bg-warning text-end pe-2">전체 총합</th>
+          <td class="bg-warning fw-bold text-start ps-2">{{ summary['overall'] }}</td>
+          <td colspan="{{ procedures|length - 3 }}"></td>
+          <td class="bg-light text-end small">M4 외수</td>
+          <td class="fw-bold">{{ summary['M4_OUT_S'] }}</td>
+        </tr>
+
+        <!-- Row D: Inpatient Sedation Total -->
+        <tr>
+          <td colspan="{{ 2 + 1 + (procedures|length - 3) }}"></td>
+          <td class="bg-light text-end small">병수 합계</td>
+          <td class="fw-bold">{{ summary['INP_S_total'] }}</td>
+        </tr>
+
+        <!-- Row E: HC Total (PUB + CHK) -->
+        <tr>
+          <td colspan="{{ 2 + 1 + (procedures|length - 3) }}"></td>
+          <td class="bg-light text-end small">HC 총합</td>
+          <td class="fw-bold">{{ summary['HC_total'] }}</td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
 </div>
 
-<div class="table-responsive">
-  <table class="table table-bordered align-middle dashboard-table">
-    <thead class="table-light">
-      <tr>
-        <th>의사</th>
-        {% for group in patient_groups %}
-        <th>{{ group.name }}</th>
-        {% endfor %}
-      </tr>
-    </thead>
-    <tbody>
-      {% for doctor in doctors %}
-      <tr>
-        <th class="table-light">{{ doctor.doctor_name }} ({{ doctor.doctor_code }})</th>
-        {% for group in patient_groups %}
-        <td>
-          <div class="d-flex flex-wrap gap-1">
-            {% for code in procedure_types %}
-              <div class="badge bg-secondary">{{ code.name }}: {{ matrix[doctor.doctor_code][group.code][code.code] }}</div>
-            {% endfor %}
-          </div>
-        </td>
-        {% endfor %}
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-</div>
+<script>
+  const CURRENT_DATE = "{{ start.strftime('%Y-%m-%d') }}";
 
-<div class="row g-3 mt-3">
-  <div class="col-12 col-md-6 col-lg-4">
-    <div class="summary-card">
-      <h6>프로시저 합계</h6>
-      {% for code in procedure_types %}
-        <div class="d-flex justify-content-between"><span>{{ code.name }}</span><span>{{ summary[code.code] }}</span></div>
-      {% endfor %}
-    </div>
-  </div>
-  <div class="col-12 col-md-6 col-lg-4">
-    <div class="summary-card">
-      <h6>진정 구분</h6>
-      <div class="d-flex justify-content-between"><span>일반 총합</span><span>{{ summary['일반_total'] }}</span></div>
-      <div class="d-flex justify-content-between"><span>수면 총합</span><span>{{ summary['수면_total'] }}</span></div>
-      <div class="d-flex justify-content-between fw-bold"><span>전체 총합</span><span>{{ summary['overall'] }}</span></div>
-    </div>
-  </div>
-  <div class="col-12 col-md-6 col-lg-4">
-    <div class="summary-card">
-      <h6>의사별 외수 합계</h6>
-      {% for doctor in doctors %}
-      <div class="d-flex justify-content-between"><span>{{ doctor.doctor_name }}</span><span>{{ summary['doctor_' ~ doctor.doctor_code ~ '_external'] }}</span></div>
-      {% endfor %}
-    </div>
-  </div>
-</div>
+  function updateInline(doc, proc, suffix, action) {
+    const inputId = `in-${doc}-${proc}-${suffix}`;
+    const el = document.getElementById(inputId);
+    let val = parseInt(el.value) || 0;
+    if (action === 'inc') val++; else val--;
+    if (val < 0) val = 0;
+    el.value = val;
+
+    sendUpdate(doc, proc, suffix, val);
+  }
+
+  function manualInline(doc, proc, suffix) {
+    const inputId = `in-${doc}-${proc}-${suffix}`;
+    const el = document.getElementById(inputId);
+    let val = parseInt(el.value) || 0;
+    if (val < 0) { val = 0; el.value = 0; }
+
+    sendUpdate(doc, proc, suffix, val);
+  }
+
+  function sendUpdate(doc, proc, suffix, value) {
+    const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    const metricCode = `${proc}_${suffix}`;
+
+    fetch('/api/update_log', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': token
+      },
+      body: JSON.stringify({
+        doctor_name: doc,
+        metric_code: metricCode,
+        value: value,
+        date: CURRENT_DATE,
+        action: 'set'
+      })
+    }).then(r => {
+      if (!r.ok) {
+        console.error("Update failed");
+      }
+    });
+  }
+</script>
+
+<style>
+  .xx-small {
+    font-size: 0.65rem;
+  }
+
+  .cell-readonly {
+    cursor: not-allowed;
+    background-color: rgba(233, 236, 239, 0.4);
+    user-select: none;
+  }
+
+  /* Remove number input arrows */
+  input::-webkit-outer-spin-button,
+  input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  input[type=number] {
+    -moz-appearance: textfield;
+  }
+</style>
 {% endblock %}

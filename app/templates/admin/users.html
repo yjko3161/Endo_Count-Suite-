@@ -9,23 +9,28 @@
 <table class="table table-striped table-hover">
   <thead>
     <tr>
-      <th>ID</th><th>로그인ID</th><th>이름</th><th>권한</th><th>활성</th><th>최근 로그인</th><th>생성일</th><th>액션</th>
+      <th>ID</th>
+      <th>로그인ID</th>
+      <th>이름</th>
+      <th>권한</th>
+      <th>활성</th>
+      <th>액션</th>
     </tr>
   </thead>
   <tbody>
     {% for user in users %}
     <tr>
-      <td>{{ user.id }}</td>
-      <td>{{ user.username }}</td>
+      <td>{{ user.user_id }}</td>
+      <td>{{ user.login_id }}</td>
       <td>{{ user.name }}</td>
       <td>{{ user.role }}</td>
       <td>{{ 'Y' if user.is_active else 'N' }}</td>
-      <td>{{ user.last_login or '-' }}</td>
-      <td>{{ user.created_at.strftime('%Y-%m-%d') }}</td>
       <td class="d-flex gap-1 flex-wrap">
-        <a class="btn btn-sm btn-outline-primary" href="{{ url_for('admin.edit_user', user_id=user.id) }}">수정</a>
-        <a class="btn btn-sm btn-outline-warning" href="{{ url_for('admin.reset_password', user_id=user.id) }}">비번 초기화</a>
-        <a class="btn btn-sm btn-outline-danger" href="{{ url_for('admin.force_logout', user_id=user.id) }}">강제 로그아웃</a>
+        <a class="btn btn-sm btn-outline-primary" href="{{ url_for('admin.edit_user', user_id=user.user_id) }}">수정</a>
+        <a class="btn btn-sm btn-outline-warning" href="{{ url_for('admin.reset_password', user_id=user.user_id) }}">비번
+          초기화</a>
+        {# <a class="btn btn-sm btn-outline-danger" href="{{ url_for('admin.force_logout', user_id=user.user_id) }}">강제
+          로그아웃</a> #}
       </td>
     </tr>
     {% endfor %}

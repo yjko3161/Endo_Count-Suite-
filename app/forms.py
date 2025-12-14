@@ -22,7 +22,7 @@ class LoginForm(FlaskForm):
 class UserForm(FlaskForm):
     username = StringField("로그인ID", validators=[DataRequired(), Length(max=64)])
     name = StringField("이름", validators=[DataRequired(), Length(max=120)])
-    role = SelectField("권한", choices=[("Admin", "Admin"), ("User", "User")])
+    role = SelectField("권한", choices=[("admin", "Admin"), ("user", "User")])
     is_active = BooleanField("활성")
     password = PasswordField("비밀번호 (신규/변경 시)")
     submit = SubmitField("저장")

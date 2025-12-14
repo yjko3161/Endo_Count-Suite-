@@ -1,7 +1,146 @@
-body { background: #f7f8fb; }
-.dashboard-table th, .dashboard-table td { white-space: nowrap; }
-.summary-card { background:#fff; border:1px solid #e5e7eb; border-radius:8px; padding:1rem; box-shadow:0 1px 3px rgba(0,0,0,0.08); }
-@media (max-width: 767px) {
-  .dashboard-table { font-size: 0.9rem; }
-  form .form-label { font-size: 0.85rem; }
+body {
+  background: #f7f8fb;
 }
+
+.dashboard-table th,
+.dashboard-table td {
+  white-space: nowrap;
+}
+
+.summary-card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 1rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+/* Mobile Devices (Portrait) */
+@media (max-width: 767px) {
+  .dashboard-table {
+    font-size: 0.8rem;
+  }
+
+  .dashboard-table th,
+  .dashboard-table td {
+    padding: 0.5rem;
+  }
+
+  form .form-label {
+    font-size: 0.85rem;
+  }
+
+  .container-fluid {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+}
+
+/* Tablet Devices (Landscape & Portrait) */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .dashboard-table {
+    font-size: 0.9rem;
+  }
+
+  .container-fluid {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+}
+
+/* Ensure tables scroll on small screens */
+.table-responsive {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Dashboard Matrix Styling */
+.matrix-table th,
+.matrix-table td {
+  vertical-align: middle;
+  border-color: #000;
+  /* Stricter border color like Excel */
+}
+
+.small-date-header {
+  font-size: 0.7rem;
+  color: #666;
+}
+
+.matrix-cell {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  width: 60px;
+  /* Fixed width for better grid alignment */
+  height: 40px;
+}
+
+.matrix-quadrant {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  position: relative;
+  /* For absolute positioning of controls if needed */
+  cursor: pointer;
+}
+
+.matrix-quadrant:hover .q-controls {
+  display: flex;
+}
+
+.q-controls {
+  display: none;
+  /* Hidden by default */
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.9);
+  justify-content: center;
+  align-items: center;
+  gap: 2px;
+}
+
+.btn-mini {
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  font-size: 10px;
+  line-height: 1;
+  border: 1px solid #ccc;
+  background: #fff;
+  cursor: pointer;
+}
+
+.btn-plus {
+  color: blue;
+  font-weight: bold;
+}
+
+.btn-minus {
+  color: red;
+  font-weight: bold;
+}
+
+.q-tl {
+  border-right: 1px solid #ddd;
+  border-bottom: 1px solid #ddd;
+}
+
+/* Top-Left */
+.q-tr {
+  border-bottom: 1px solid #ddd;
+}
+
+/* Top-Right */
+.q-bl {
+  border-right: 1px solid #ddd;
+}
+
+/* Bottom-Left */
+.q-br {}
+
+/* Bottom-Right */

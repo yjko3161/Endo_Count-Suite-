@@ -5,7 +5,15 @@
   <a class="btn btn-sm btn-primary" href="{{ url_for('admin.create_doctor') }}">의사 등록</a>
 </div>
 <table class="table table-striped">
-  <thead><tr><th>코드</th><th>이름</th><th>순서</th><th>활성</th><th>수정</th></tr></thead>
+  <thead>
+    <tr>
+      <th>코드</th>
+      <th>이름</th>
+      <th>순서</th>
+      <th>활성</th>
+      <th>수정</th>
+    </tr>
+  </thead>
   <tbody>
     {% for doctor in doctors %}
     <tr>
@@ -13,7 +21,8 @@
       <td>{{ doctor.doctor_name }}</td>
       <td>{{ doctor.display_order }}</td>
       <td>{{ 'Y' if doctor.is_active else 'N' }}</td>
-      <td><a class="btn btn-sm btn-outline-primary" href="{{ url_for('admin.edit_doctor', doctor_id=doctor.id) }}">수정</a></td>
+      <td><a class="btn btn-sm btn-outline-primary"
+          href="{{ url_for('admin.edit_doctor', doctor_id=doctor.doctor_id) }}">수정</a></td>
     </tr>
     {% endfor %}
   </tbody>

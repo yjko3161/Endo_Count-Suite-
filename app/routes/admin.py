@@ -3,7 +3,7 @@ from flask_login import current_user, login_required
 from ..forms import UserForm, CodeGroupForm, CodeForm, DoctorForm, CategoryForm
 from ..models import (
     User,
-    UserSession,
+    # UserSession,
     CodeGroup,
     Code,
     Doctor,
@@ -12,6 +12,16 @@ from ..models import (
 from .. import db
 
 bp = Blueprint("admin", __name__, url_prefix="/admin")
+
+# ... (rest of imports/defs)
+
+# @bp.route("/users/<int:user_id>/logout")
+# @login_required
+# def force_logout(user_id):
+#     UserSession.query.filter_by(user_id=user_id, is_active=True).update({"is_active": False})
+#     db.session.commit()
+#     flash("해당 사용자를 강제 로그아웃했습니다.", "info")
+#     return redirect(url_for("admin.users"))
 
 
 def admin_required():
@@ -33,7 +43,7 @@ def protect_admin():
 @bp.route("/users")
 @login_required
 def users():
-    users = User.query.order_by(User.created_at.desc()).all()
+    users = User.query.order_by(User.user_id.desc()).all()
     return render_template("admin/users.html", users=users)
 
 
@@ -43,7 +53,7 @@ def create_user():
     form = UserForm()
     if form.validate_on_submit():
         user = User(
-            username=form.username.data,
+            login_id=form.username.data,
             name=form.name.data,
             role=form.role.data,
             is_active=form.is_active.data,
@@ -64,13 +74,13 @@ def create_user():
 def edit_user(user_id):
     user = User.query.get_or_404(user_id)
     form = UserForm(
-        username=user.username,
+        username=user.login_id,
         name=user.name,
         role=user.role,
         is_active=user.is_active,
     )
     if form.validate_on_submit():
-        user.username = form.username.data
+        user.login_id = form.username.data
         user.name = form.name.data
         user.role = form.role.data
         user.is_active = form.is_active.data
@@ -92,13 +102,15 @@ def reset_password(user_id):
     return redirect(url_for("admin.users"))
 
 
-@bp.route("/users/<int:user_id>/logout")
-@login_required
-def force_logout(user_id):
-    UserSession.query.filter_by(user_id=user_id, is_active=True).update({"is_active": False})
-    db.session.commit()
-    flash("해당 사용자를 강제 로그아웃했습니다.", "info")
-    return redirect(url_for("admin.users"))
+# @bp.route("/users/<int:user_id>/logout")
+# @login_required
+# def force_logout(user_id):
+#     # UserSession not supported in legacy
+#     # UserSession.query.filter_by(user_id=user_id, is_active=True).update({"is_active": False})
+#     # db.session.commit()
+#     flash("해당 사용자를 강제 로그아웃했습니다. (기능 비활성화됨)", "info")
+#     return redirect(url_for("admin.users"))
+
 
 
 @bp.route("/codes")

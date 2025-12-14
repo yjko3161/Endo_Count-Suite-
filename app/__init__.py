@@ -1,5 +1,9 @@
 import os
 from flask import Flask
+from dotenv import load_dotenv
+
+load_dotenv()
+
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from flask_bcrypt import Bcrypt
@@ -39,10 +43,12 @@ def create_app(test_config=None):
     app.register_blueprint(dashboard.bp)
     app.register_blueprint(admin.bp)
 
-    with app.app_context():
-        db.create_all()
-        from .models import ensure_admin_exists
 
-        ensure_admin_exists()
+    with app.app_context():
+        # db.create_all() - Schema managed externally
+        # from .models import ensure_admin_exists
+        # ensure_admin_exists()
+        pass
+
 
     return app
