@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="d-flex flex-column flex-md-row gap-2 align-items-start align-items-md-center justify-content-between mb-3">
+  <form method="post" class="d-flex flex-column flex-sm-row gap-2 align-items-sm-end flex-wrap">
+    {{ form.hidden_tag() }}
+    <div>
+      {{ form.period.label(class='form-label') }}
+      {{ form.period(class='form-select') }}
+    </div>
+    <div>
+      {{ form.start_date.label(class='form-label') }}
+      {{ form.start_date(class='form-control') }}
+    </div>
+    <div>
+      {{ form.end_date.label(class='form-label') }}
+      {{ form.end_date(class='form-control') }}
+    </div>
+    <div class="d-grid">
+      {{ form.submit(class='btn btn-primary') }}
+    </div>
+  </form>
+  <div class="text-muted small">{{ start }} ~ {{ end }} 기준</div>
+</div>
+
+<div class="table-responsive">
+  <table class="table table-bordered align-middle dashboard-table">
+    <thead class="table-light">
+      <tr>
+        <th>의사</th>
+        {% for group in patient_groups %}
+        <th>{{ group.name }}</th>
+        {% endfor %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for doctor in doctors %}
+      <tr>
+        <th class="table-light">{{ doctor.doctor_name }} ({{ doctor.doctor_code }})</th>
+        {% for group in patient_groups %}
+        <td>
+          <div class="d-flex flex-wrap gap-1">
+            {% for code in procedure_types %}
+              <div class="badge bg-secondary">{{ code.name }}: {{ matrix[doctor.doctor_code][group.code][code.code] }}</div>
+            {% endfor %}
+          </div>
+        </td>
+        {% endfor %}
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="row g-3 mt-3">
+  <div class="col-12 col-md-6 col-lg-4">
+    <div class="summary-card">
+      <h6>프로시저 합계</h6>
+      {% for code in procedure_types %}
+        <div class="d-flex justify-content-between"><span>{{ code.name }}</span><span>{{ summary[code.code] }}</span></div>
+      {% endfor %}
+    </div>
+  </div>
+  <div class="col-12 col-md-6 col-lg-4">
+    <div class="summary-card">
+      <h6>진정 구분</h6>
+      <div class="d-flex justify-content-between"><span>일반 총합</span><span>{{ summary['일반_total'] }}</span></div>
+      <div class="d-flex justify-content-between"><span>수면 총합</span><span>{{ summary['수면_total'] }}</span></div>
+      <div class="d-flex justify-content-between fw-bold"><span>전체 총합</span><span>{{ summary['overall'] }}</span></div>
+    </div>
+  </div>
+  <div class="col-12 col-md-6 col-lg-4">
+    <div class="summary-card">
+      <h6>의사별 외수 합계</h6>
+      {% for doctor in doctors %}
+      <div class="d-flex justify-content-between"><span>{{ doctor.doctor_name }}</span><span>{{ summary['doctor_' ~ doctor.doctor_code ~ '_external'] }}</span></div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}
