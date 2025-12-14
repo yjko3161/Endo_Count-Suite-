@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+  <h4>공통코드 관리</h4>
+  <div class="d-flex gap-2">
+    <a class="btn btn-sm btn-outline-primary" href="{{ url_for('admin.create_code_group') }}">코드그룹 추가</a>
+    <a class="btn btn-sm btn-primary" href="{{ url_for('admin.create_code') }}">코드 추가</a>
+  </div>
+</div>
+<h6>코드 그룹</h6>
+<table class="table table-sm table-bordered">
+  <thead><tr><th>코드</th><th>이름</th><th>수정</th></tr></thead>
+  <tbody>
+    {% for g in groups %}
+    <tr>
+      <td>{{ g.group_code }}</td><td>{{ g.name }}</td>
+      <td><a class="btn btn-sm btn-outline-primary" href="{{ url_for('admin.edit_code_group', group_id=g.id) }}">수정</a></td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+<h6 class="mt-4">코드 목록</h6>
+<table class="table table-hover">
+  <thead><tr><th>그룹</th><th>코드</th><th>이름</th><th>순서</th><th>활성</th><th>수정</th></tr></thead>
+  <tbody>
+    {% for code in codes %}
+    <tr>
+      <td>{{ code.group.group_code }}</td>
+      <td>{{ code.code }}</td>
+      <td>{{ code.name }}</td>
+      <td>{{ code.display_order }}</td>
+      <td>{{ 'Y' if code.is_active else 'N' }}</td>
+      <td><a class="btn btn-sm btn-outline-primary" href="{{ url_for('admin.edit_code', code_id=code.id) }}">수정</a></td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

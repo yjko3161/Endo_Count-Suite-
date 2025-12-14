@@ -1,0 +1,7 @@
+body { background: #f7f8fb; }
+.dashboard-table th, .dashboard-table td { white-space: nowrap; }
+.summary-card { background:#fff; border:1px solid #e5e7eb; border-radius:8px; padding:1rem; box-shadow:0 1px 3px rgba(0,0,0,0.08); }
+@media (max-width: 767px) {
+  .dashboard-table { font-size: 0.9rem; }
+  form .form-label { font-size: 0.85rem; }
+}
