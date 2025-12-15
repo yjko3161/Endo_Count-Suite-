@@ -88,3 +88,24 @@ class ExamLog(db.Model):
 
     doctor = db.relationship("Doctor", backref="logs")
     category = db.relationship("Category", backref="logs")
+
+class LoginAttempt(db.Model):
+    __tablename__ = "login_attempts"
+    id = db.Column(db.Integer, primary_key=True)
+    ip_address = db.Column(db.String(50), nullable=False, index=True)
+    attempt_time = db.Column(db.DateTime, default=datetime.utcnow)
+    # We only store failures, so we don't strictly need a 'success' flag if we delete on success.
+
+class BlockedIp(db.Model):
+    __tablename__ = "blocked_ips"
+    id = db.Column(db.Integer, primary_key=True)
+    ip_address = db.Column(db.String(50), nullable=False, unique=True, index=True)
+    reason = db.Column(db.String(255))
+    blocked_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class SuspiciousEvent(db.Model):
+    __tablename__ = "suspicious_events"
+    id = db.Column(db.Integer, primary_key=True)
+    ip_address = db.Column(db.String(50), nullable=False, index=True)
+    url = db.Column(db.String(255)) # The URL they tried to access
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
