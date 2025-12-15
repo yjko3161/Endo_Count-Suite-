@@ -306,6 +306,73 @@ def dashboard_view():
     return index()
 
 
+@bp.route("/input")
+@login_required
+def input_view():
+    doctor_name = request.args.get('doctor_name')
+    date_str = request.args.get('date')
+
+    if not date_str:
+        filter_date = date.today()
+    else:
+        try:
+            filter_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+        except ValueError:
+            filter_date = date.today()
+            
+    # Active doctors for selection
+    doctors = Doctor.query.filter_by(is_active=1).order_by(Doctor.doctor_id).all()
+    
+    # Procedures list
+    procedures = ['ENDO', 'COLON', 'ERCP', 'SIG', 'PEG', 'CESD', 'GESD']
+    
+    # Metrics breakdown
+    # Two main groups: Public (Gong), Checkup (Geom)
+    # Each has Sedation (_S) and General (_G)
+    # Plus Outpatient (O), Inpatient (Ward/I) 
+    # Structure for the form:
+    # Row 1: Header (Metric Name)
+    # Row 2: Sedation (S)
+    # Row 3: General (G)
+    # Cols: Public(PUB), Checkup(CHK), Outpatient(OUT), Inpatient(INP)
+    
+    # We need to fetch data if a doctor is selected
+    doctor_data = defaultdict(lambda: defaultdict(int))
+    
+    selected_doctor = None
+    if doctor_name:
+        selected_doctor = Doctor.query.filter_by(doctor_name=doctor_name).first()
+        
+    if selected_doctor:
+        # Fetch logs
+        logs = db.session.query(ExamLog, Category).join(
+            Category, ExamLog.category_id == Category.category_id
+        ).filter(
+            ExamLog.doctor_id == selected_doctor.doctor_id,
+            ExamLog.exam_date == filter_date.strftime('%Y-%m-%d')
+        ).all()
+
+        for log, cat in logs:
+            impact = 1 if log.action_type == 'INSERT' else -1
+            # cat.metric_code e.g. ENDO_PUB_S
+            if '_' in cat.metric_code:
+                try:
+                    proc, suffix = cat.metric_code.split('_', 1)
+                    doctor_data[proc][suffix] += impact
+                except ValueError:
+                    pass
+    
+    return render_template(
+        "input.html",
+        doctors=doctors,
+        selected_doctor=selected_doctor,
+        target_date=filter_date,
+        formatted_date=get_korean_date_string(filter_date),
+        procedures=procedures,
+        doctor_data=doctor_data
+    )
+
+
 @bp.route("/export_excel")
 @login_required
 def export_excel():

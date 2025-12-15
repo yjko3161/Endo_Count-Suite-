@@ -1,0 +1,228 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- Macro for Input Counter -->
+{% macro input_counter(doc, proc, suffix, val) %}
+<div class="input-group input-group-sm justify-content-center">
+    <button class="btn btn-outline-primary" type="button"
+        onclick="updateInput('{{doc}}', '{{proc}}', '{{suffix}}', 'dec')">-</button>
+    <input type="number" class="form-control text-center fw-bold" style="max-width: 60px;"
+        id="in-{{doc}}-{{proc}}-{{suffix}}" value="{{ val or 0 }}" min="0"
+        onchange="manualInput('{{doc}}', '{{proc}}', '{{suffix}}')">
+    <button class="btn btn-outline-danger" type="button"
+        onclick="updateInput('{{doc}}', '{{proc}}', '{{suffix}}', 'inc')">+</button>
+</div>
+{% endmacro %}
+
+<div class="container-fluid py-3">
+    <!-- Header: Date and Controls -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="h4 mb-0 fw-bold">Doctor Input</h2>
+
+        <form class="d-flex align-items-center gap-2" method="GET" action="{{ url_for('dashboard.input_view') }}">
+            {% if selected_doctor %}
+            <input type="hidden" name="doctor_name" value="{{ selected_doctor.doctor_name }}">
+            {% endif %}
+            <label for="date-picker" class="me-2 fw-bold">{{ formatted_date }}</label>
+            <input type="date" id="date-picker" name="date" class="form-control form-control-sm"
+                value="{{ target_date.strftime('%Y-%m-%d') }}" onchange="this.form.submit()" style="width: auto;">
+        </form>
+    </div>
+
+    <!-- Doctor Selection Area -->
+    <div class="card mb-4 shadow-sm">
+        <div class="card-header bg-light">
+            <h6 class="mb-0 fw-bold">Select Doctor</h6>
+        </div>
+        <div class="card-body">
+            <div class="d-flex flex-wrap gap-2">
+                {% for doc in doctors %}
+                {% set is_active = selected_doctor and selected_doctor.doctor_name == doc.doctor_name %}
+                <a href="{{ url_for('dashboard.input_view', doctor_name=doc.doctor_name, date=target_date.strftime('%Y-%m-%d')) }}"
+                    class="btn btn-sm {{ 'btn-primary' if is_active else 'btn-outline-secondary' }}"
+                    style="min-width: 60px;">
+                    {{ doc.doctor_name }}
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    {% if selected_doctor %}
+    <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-4">
+        {% for proc in procedures %}
+        <div class="col">
+            <div class="card h-100 shadow-sm border-0">
+                <div class="card-header bg-primary bg-opacity-10 py-2">
+                    <h5 class="card-title mb-0 text-center fw-bold">{{ proc }}</h5>
+                </div>
+                <div class="card-body p-0">
+                    <table class="table table-bordered mb-0 text-center align-middle">
+                        <thead class="table-light small text-muted">
+                            <tr>
+                                <th style="width: 20%">Type</th>
+                                <th style="width: 20%">Metric</th>
+                                <th style="width: 60%">Value</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Group 1: Public (PUB) & Checkup (CHK) -->
+                            <tr class="table-secondary table-active">
+                                <td colspan="3" class="fw-bold small py-1">Biopsy / CLO (공단/검진)</td>
+                            </tr>
+
+                            <!-- Row: PUB_S (Public Sedation) -->
+                            <tr>
+                                <td rowspan="2" class="align-middle small">공단</td>
+                                <td class="small text-muted">수면</td>
+                                <td class="p-1">
+                                    {{ input_counter(selected_doctor.doctor_name, proc, 'PUB_S',
+                                    doctor_data[proc]['PUB_S']) }}
+                                </td>
+                            </tr>
+                            <!-- Row: PUB_G (Public General) -->
+                            <tr>
+                                <td class="small text-muted">일반</td>
+                                <td class="p-1">
+                                    {{ input_counter(selected_doctor.doctor_name, proc, 'PUB_G',
+                                    doctor_data[proc]['PUB_G']) }}
+                                </td>
+                            </tr>
+
+                            <!-- Row: CHK_S (Checkup Sedation) -->
+                            <tr>
+                                <td rowspan="2" class="align-middle small">검진</td>
+                                <td class="small text-muted">수면</td>
+                                <td class="p-1">
+                                    {{ input_counter(selected_doctor.doctor_name, proc, 'CHK_S',
+                                    doctor_data[proc]['CHK_S']) }}
+                                </td>
+                            </tr>
+                            <!-- Row: CHK_G (Checkup General) -->
+                            <tr>
+                                <td class="small text-muted">일반</td>
+                                <td class="p-1">
+                                    {{ input_counter(selected_doctor.doctor_name, proc, 'CHK_G',
+                                    doctor_data[proc]['CHK_G']) }}
+                                </td>
+                            </tr>
+
+                            <!-- Group 2: Outpatient (OUT) & Inpatient (INP) -->
+                            <tr class="table-secondary table-active">
+                                <td colspan="3" class="fw-bold small py-1">Polypectomy (외래/병동)</td>
+                            </tr>
+
+                            <!-- Row: OUT_S -->
+                            <tr>
+                                <td rowspan="2" class="align-middle small">외래</td>
+                                <td class="small text-muted">수면</td>
+                                <td class="p-1">
+                                    {{ input_counter(selected_doctor.doctor_name, proc, 'OUT_S',
+                                    doctor_data[proc]['OUT_S']) }}
+                                </td>
+                            </tr>
+                            <!-- Row: OUT_G -->
+                            <tr>
+                                <td class="small text-muted">일반</td>
+                                <td class="p-1">
+                                    {{ input_counter(selected_doctor.doctor_name, proc, 'OUT_G',
+                                    doctor_data[proc]['OUT_G']) }}
+                                </td>
+                            </tr>
+
+                            <!-- Row: INP_S -->
+                            <tr>
+                                <td rowspan="2" class="align-middle small">병동</td>
+                                <td class="small text-muted">수면</td>
+                                <td class="p-1">
+                                    {{ input_counter(selected_doctor.doctor_name, proc, 'INP_S',
+                                    doctor_data[proc]['INP_S']) }}
+                                </td>
+                            </tr>
+                            <!-- Row: INP_G -->
+                            <tr>
+                                <td class="small text-muted">일반</td>
+                                <td class="p-1">
+                                    {{ input_counter(selected_doctor.doctor_name, proc, 'INP_G',
+                                    doctor_data[proc]['INP_G']) }}
+                                </td>
+                            </tr>
+
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="alert alert-info text-center py-5">
+        <h4 class="alert-heading">No Doctor Selected</h4>
+        <p>Please select a doctor from the list above to start entering data.</p>
+    </div>
+    {% endif %}
+</div>
+
+
+<script>
+    const CURRENT_DATE = "{{ target_date.strftime('%Y-%m-%d') }}";
+
+    function updateInput(doc, proc, suffix, action) {
+        const inputId = `in-${doc}-${proc}-${suffix}`;
+        const el = document.getElementById(inputId);
+        let val = parseInt(el.value) || 0;
+        if (action === 'inc') val++; else val--;
+        if (val < 0) val = 0;
+        el.value = val;
+
+        sendUpdate(doc, proc, suffix, val);
+    }
+
+    function manualInput(doc, proc, suffix) {
+        const inputId = `in-${doc}-${proc}-${suffix}`;
+        const el = document.getElementById(inputId);
+        let val = parseInt(el.value) || 0;
+        if (val < 0) { val = 0; el.value = 0; }
+
+        sendUpdate(doc, proc, suffix, val);
+    }
+
+    function sendUpdate(doc, proc, suffix, value) {
+        const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        const metricCode = `${proc}_${suffix}`;
+
+        fetch('/api/update_log', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': token
+            },
+            body: JSON.stringify({
+                doctor_name: doc,
+                metric_code: metricCode,
+                value: value,
+                date: CURRENT_DATE,
+                action: 'set'
+            })
+        }).then(r => {
+            if (!r.ok) {
+                console.error("Update failed");
+                // Optionally show error toast
+            }
+        });
+    }
+</script>
+
+<style>
+    /* Remove arrows from number inputs */
+    input[type=number]::-webkit-inner-spin-button,
+    input[type=number]::-webkit-outer-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    input[type=number] {
+        -moz-appearance: textfield;
+    }
+</style>
+{% endblock %}

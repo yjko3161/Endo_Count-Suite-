@@ -25,6 +25,7 @@
           <li class="nav-item"><a class="nav-link" href="{{ url_for('admin.doctors') }}">의사</a></li>
           <li class="nav-item"><a class="nav-link" href="{{ url_for('admin.categories') }}">카테고리</a></li>
           {% endif %}
+          <li class="nav-item"><a class="nav-link" href="{{ url_for('dashboard.input_view') }}">닥터별 입력</a></li>
         </ul>
         <ul class="navbar-nav">
           {% if current_user.is_authenticated %}
